@@ -1,56 +1,69 @@
 class GuessingGame
+  MAX_GUESSES = 7
+  RANGE = 1..100
+
+  RESULT_OF_GUESS_MESSAGE = {
+    high: "Your number is too high.",
+    low: "Your number is too low.",
+    match: "That's the number!"
+  }.freeze
+
+  WIN_OR_LOSE = {
+    high: :lose,
+    low: :lose,
+    match: :win
+  }.freeze
+
+  RESULT_OF_GAME_MESSAGE = {
+    win: 'You won!',
+    lose: 'You have no more guesses. You lost!'
+  }.freeze
+
   def initialize
-    @left_chances = 7
-    @target = (1..100).to_a.sample
-    @guess_number = 0
+    @secret_number = nil
   end
 
   def play
-    loop do
-      display_remaining
-      get_guess_number
-      compare
-      break if won? || lose?
-      @left_chances -= 1
-    end
-    display_result
+    reset
+    play_game
   end
 
   private
 
-  def display_result
-    puts won? ? 'You win!' : 'You are out of guesses. You lose.'
+  def reset
+    @secret_number = rand(RANGE)
   end
 
-  def lose?
-    @left_chances == 0
-  end
-
-  def won?
-    @target == @guess_number
-  end
-
-  def compare
-    if @target > @guess_number
-      puts 'Your guess is too low.'
-    elsif @target < @guess_number
-      puts 'Your guess is too high.'
+  def play_game
+    result = nil
+    MAX_GUESSES.downto(1) do |remaining|
+      display_remaining_guesses(remaining)
+      result = check_guess(obtain_one_guess)
+      puts RESULT_OF_GUESS_MESSAGE[result]
+      break if result == :match
     end
+    puts RESULT_OF_GAME_MESSAGE[WIN_OR_LOSE[result]]
   end
 
-  def get_guess_number
-    print 'Enter a number between 1 and 100: '
+  def check_guess(guess_value)
+    return :match if guess_value == @secret_number
+    return :high if guess_value > @secret_number
+    :low
+  end
+
+  def obtain_one_guess
+    print "Enter a number between #{RANGE.first} and #{RANGE.last}: "
     input = nil
     loop do
       input = gets.chomp.to_i
       break if (1..100).include? input
       print 'Invalid guess. '
     end
-    @guess_number = input
+    input
   end
 
-  def display_remaining
-    puts "You have #{@left_chances} guess#{@left_chances == 1 ? '' : 'es'} remaining."
+  def display_remaining_guesses(remaining)
+    puts "You have #{remaining} guess#{remaining == 1 ? '' : 'es'} remaining."
   end
 end
 

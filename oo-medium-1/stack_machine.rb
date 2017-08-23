@@ -1,51 +1,67 @@
+require 'set'
+
+class MinilangRuntimeError < RuntimeError; end
+class BadTokenError < MinilangRuntimeError; end
+class EmptyStackError < MinilangRuntimeError; end
+
 class Minilang
-  COMMANDS = ['PRINT', 'PUSH', 'POP', 'ADD', 'SUB', 'MULT', 'DIV', 'MOD']
+  ACTIONS = Set.new %w(PRINT PUSH POP ADD SUB MULT DIV MOD)
 
-  attr_reader :commands, :stack
-
-  def initialize(commands)
+  def initialize(program)
     @stack = []
     @register = 0
-    @commands = commands
+    @program = program
   end
 
   def eval
-    commands.split(' ').each do |command|
-      excute(command)
+    begin
+      @program.split(' ').each {|command| excute(command)}
+    rescue MinilangRuntimeError => e
+      puts e.message
     end
   end
 
   def excute(command)
-    begin
-      case command
-      when 'PUSH'
-        @stack.push(@register)
-      when 'POP'
-        @register = stack.pop
-        raise 'empty' unless @register
-      when 'ADD'
-        @register += stack.pop
-      when 'SUB'
-        @register -= stack.pop
-      when 'MULT'
-        @register *= stack.pop
-      when 'DIV'
-        @register /= stack.pop
-      when 'MOD'
-        @register %= stack.pop
-      when 'PRINT'
-        p @register if @register
-      else
-        raise 'invalid' unless command.to_i.to_s == command
-        @register = command.to_i
-      end
-    rescue RuntimeError => e
-      if e.message == 'empty'
-        puts "Empty stack!"
-      elsif e.message == 'invalid'
-        puts "Invalid token: #{command}"
-      end
+    if ACTIONS.include? command
+      send(command.downcase)
+    elsif command =~ /\A[-+]?\d+\z/
+      @register = command.to_i
+    else
+      raise BadTokenError, "Invalid token: #{command}"
     end
+  end
+
+  def push
+    @stack.push(@register)
+  end
+
+  def pop
+    raise EmptyStackError, "Empty stack!" if @stack.empty?
+    @register = @stack.pop
+  end
+
+  def add
+    @register += pop
+  end
+
+  def div
+    @register /= pop
+  end
+
+  def mod
+    @register %= pop
+  end
+
+  def mult
+    @register *= pop
+  end
+
+  def sub
+    @register -= pop
+  end
+
+  def print
+    puts @register
   end
 end
 
@@ -80,4 +96,4 @@ Minilang.new('-3 PUSH 5 SUB PRINT').eval
 # 8
 
 Minilang.new('6 PUSH').eval
-# (nothing printed; no PRINT commands)
+# (nothing printed; no PRINT program)

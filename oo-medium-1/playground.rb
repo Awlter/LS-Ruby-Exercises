@@ -1,8 +1,14 @@
-class Test
+class SuperTest
+
+end
+
+class Test < SuperTest
   attr_reader :test_var
+  CONSTANTS = '1'
 
   def initialize
     @test_var = []
+    p   self::CONSTANTS
   end
 end
 

@@ -32,5 +32,5 @@
 # Best practice version
 
 def increment_string(input)
-  input.sub(/\d*$/) { |num| num ? num.succ : '1'  }
+  input.sub(/\d*$/) { |num| num.empty? ? '1' : num.succ }
 end
